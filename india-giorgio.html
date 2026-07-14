@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Per India, da Giorgio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&family=Space+Mono:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root{
+    --paper:#FFF6E9;
+    --paper-dark:#F5EAD4;
+    --ink:#2B2420;
+    --coral:#FF5A5F;
+    --mustard:#FFC93C;
+    --teal:#2EC4B6;
+    --plum:#8E44AD;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(43,36,32,0.06) 1px, transparent 0);
+    background-size:22px 22px;
+    color:var(--ink);
+    font-family:'Nunito',sans-serif;
+    min-height:100vh;
+    min-height:100dvh;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{font-family:'Fredoka',sans-serif;margin:0;}
+  .stamp{
+    font-family:'Space Mono',monospace;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-size:0.7rem;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:32px 20px calc(90px + env(safe-area-inset-bottom));
+    padding-left:calc(20px + env(safe-area-inset-left));
+    padding-right:calc(20px + env(safe-area-inset-right));
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  @media (max-width:400px){
+    .wrap{padding-left:14px; padding-right:14px; padding-top:22px;}
+    .scratch-shell{height:200px;}
+    .card{padding:16px 14px 14px;}
+    .card-emoji{width:40px; height:40px; font-size:1.6rem;}
+    .ticket{padding:22px 16px 26px;}
+    .confirm-zone .btn{width:100%;}
+  }
+
+  /* ---------- HERO / SCRATCH ---------- */
+  .hero{
+    text-align:center;
+    padding-top:24px;
+  }
+  .eyebrow{
+    color:var(--coral);
+    font-weight:700;
+  }
+  .hero h1{
+    font-size:clamp(1.8rem, 6vw, 2.6rem);
+    margin:8px 0 10px;
+    line-height:1.15;
+  }
+  .intro-line{
+    font-size:1rem;
+    color:#5c5148;
+    margin:0 0 22px;
+  }
+  .scratch-shell{
+    position:relative;
+    width:min(100%, 420px);
+    height:220px;
+    margin:0 auto;
+    border-radius:20px;
+    background:var(--paper-dark);
+    box-shadow: 0 0 0 3px var(--ink), 6px 6px 0 var(--ink);
+    overflow:hidden;
+  }
+  #reveal{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px;
+    padding:16px;
+    text-align:center;
+  }
+  #reveal h2{
+    font-size:clamp(1.4rem, 5vw, 1.9rem);
+  }
+  #scratchCanvas{
+    position:absolute; inset:0;
+    cursor:grab;
+    touch-action:none;
+  }
+  .scratch-hint{
+    position:absolute;
+    bottom:10px; left:0; right:0;
+    text-align:center;
+    font-size:0.75rem;
+    color:var(--ink);
+    opacity:0.55;
+    pointer-events:none;
+  }
+  .lock-box{
+    width:min(100%, 300px);
+    margin:0 auto;
+    border-radius:20px;
+    background:var(--paper-dark);
+    box-shadow: 0 0 0 3px var(--ink), 6px 6px 0 var(--ink);
+    padding:28px 24px 24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .lock-input{
+    width:110px;
+    font-family:'Space Mono',monospace;
+    font-size:2rem;
+    text-align:center;
+    letter-spacing:0.3em;
+    padding:8px 0 8px 0.3em;
+    border-radius:12px;
+    border:3px solid var(--ink);
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .lock-input:focus{outline:none; border-color:var(--coral);}
+  .lock-hint{
+    font-size:0.85rem;
+    opacity:0.65;
+  }
+  .lock-error{
+    font-family:'Space Mono',monospace;
+    font-size:0.8rem;
+    color:var(--coral);
+    min-height:1em;
+  }
+  .shake{
+    animation: shake 0.4s;
+  }
+  @keyframes shake{
+    10%,90%{ transform: translateX(-2px); }
+    20%,80%{ transform: translateX(4px); }
+    30%,50%,70%{ transform: translateX(-8px); }
+    40%,60%{ transform: translateX(8px); }
+  }
+  .btn-row{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:'Fredoka',sans-serif;
+    font-size:1.05rem;
+    font-weight:600;
+    padding:14px 26px;
+    min-height:48px;
+    border-radius:999px;
+    border:3px solid var(--ink);
+    cursor:pointer;
+    background:var(--teal);
+    color:var(--ink);
+    transition:transform .15s ease;
+    touch-action:manipulation;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  .btn:active{transform:scale(0.95);}
+  .btn.yes{background:var(--coral); color:var(--paper);}
+  .btn.no{
+    background:var(--paper);
+    position:relative;
+  }
+
+  /* ---------- MISSIONS ---------- */
+  #missions{display:none;}
+  .section-title{
+    text-align:center;
+    margin:44px 0 6px;
+    font-size:clamp(1.4rem, 5vw, 1.8rem);
+  }
+  .section-sub{
+    text-align:center;
+    color:#5c5148;
+    margin-bottom:28px;
+    font-size:0.95rem;
+  }
+  .cards{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:18px;
+  }
+  .card{
+    position:relative;
+    border:3px solid var(--ink);
+    border-radius:16px;
+    background:var(--paper);
+    padding:18px 18px 16px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+    box-shadow:4px 4px 0 var(--ink);
+    touch-action:manipulation;
+  }
+  .card::after{
+    content:"";
+    position:absolute;
+    top:14px; bottom:14px; right:-3px;
+    width:0;
+    border-right:3px dashed var(--ink);
+    opacity:0.35;
+  }
+  .card:hover{transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink);}
+  .card.selected{
+    background:var(--card-color, var(--mustard));
+    box-shadow:2px 2px 0 var(--ink);
+    transform:translate(2px,2px);
+  }
+  .card-top{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .card-emoji{
+    font-size:1.9rem;
+    width:46px; height:46px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--paper-dark);
+    border:2px solid var(--ink);
+    border-radius:50%;
+    flex-shrink:0;
+  }
+  .card.selected .card-emoji{background:var(--paper);}
+  .card-title{font-size:1.15rem;}
+  .card-tag{
+    font-family:'Space Mono',monospace;
+    font-size:0.68rem;
+    opacity:0.6;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  .card-desc{
+    margin:10px 0 0;
+    font-size:0.92rem;
+    line-height:1.4;
+  }
+  .check{
+    position:absolute;
+    top:-10px; right:-10px;
+    width:30px; height:30px;
+    border-radius:50%;
+    background:var(--coral);
+    color:var(--paper);
+    border:3px solid var(--ink);
+    display:none;
+    align-items:center; justify-content:center;
+    font-weight:800;
+    font-size:0.95rem;
+  }
+  .card.selected .check{display:flex;}
+  .date-panel{
+    display:none;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:2px dashed var(--ink);
+  }
+  .card.selected .date-panel{display:block;}
+  .date-panel label{
+    font-family:'Space Mono',monospace;
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:6px;
+  }
+  .date-panel input[type="text"],
+  .date-panel input[type="date"]{
+    font-family:'Nunito',sans-serif;
+    font-size:1rem;
+    padding:8px 10px;
+    border-radius:10px;
+    border:2px solid var(--ink);
+    background:var(--paper);
+    width:100%;
+    max-width:220px;
+  }
+
+  .confirm-zone{
+    text-align:center;
+    margin-top:32px;
+  }
+  #confirmBtn{
+    background:var(--ink);
+    color:var(--paper);
+    font-size:1.1rem;
+    padding:14px 34px;
+    border-color:var(--ink);
+  }
+  #confirmBtn:disabled{
+    opacity:0.35;
+    cursor:not-allowed;
+  }
+  .status-msg{
+    margin-top:10px;
+    font-size:0.85rem;
+    opacity:0.6;
+  }
+
+  /* ---------- FINAL TICKET ---------- */
+  #finalScreen{display:none; text-align:center;}
+  .ticket{
+    position:relative;
+    margin:30px auto 0;
+    max-width:440px;
+    background:var(--paper);
+    border:3px solid var(--ink);
+    border-radius:18px;
+    padding:26px 22px 30px;
+    box-shadow:6px 6px 0 var(--ink);
+  }
+  .ticket h2{font-size:1.6rem; margin-bottom:4px;}
+  .ticket .stamp{color:var(--coral); display:block; margin-bottom:14px;}
+  .ticket-line{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    text-align:left;
+    padding:10px 0;
+    border-top:2px dashed var(--ink);
+    font-size:0.92rem;
+  }
+  .ticket-line:first-of-type{border-top:none;}
+  .ticket-line-first{
+    background:var(--mustard);
+    margin:0 -22px;
+    padding:10px 22px;
+    border-top:none !important;
+  }
+  .ticket-line-first + .ticket-line{border-top:none;}
+  .first-badge{
+    font-family:'Space Mono',monospace;
+    font-size:0.7rem;
+    color:var(--coral);
+    font-weight:700;
+  }
+  .ticket-line b{font-family:'Fredoka',sans-serif;}
+  .perf{
+    position:absolute;
+    left:-13px; right:-13px;
+    height:0;
+    border-top:3px dashed var(--ink);
+    opacity:0;
+  }
+  .confetti{
+    position:fixed;
+    top:-20px;
+    font-size:1.4rem;
+    animation:fall linear forwards;
+    pointer-events:none;
+    z-index:50;
+  }
+  @keyframes fall{
+    to{ transform:translateY(105vh) rotate(360deg); opacity:0.9;}
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  (function(){
+    try{ emailjs.init({ publicKey: '8tH0FNUk5pFB-ioiE' }); }catch(e){ console.error('emailjs init error', e); }
+  })();
+</script>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOCK -->
+  <section class="hero" id="lockScreen">
+    <div class="eyebrow stamp">Accesso riservato</div>
+    <h1>Inserisci la<br>parola d'ordine.</h1>
+    <div class="lock-box">
+      <div style="font-size:2.2rem;">🔒</div>
+      <input type="text" id="lockInput" class="lock-input" maxlength="2" inputmode="numeric" pattern="[0-9]*" placeholder="••">
+      <button class="btn yes" id="lockBtn">Sblocca</button>
+      <div class="lock-hint">Indizio: il mio numero di hockey</div>
+      <div class="lock-error" id="lockError"></div>
+    </div>
+  </section>
+
+  <!-- HERO -->
+  <section class="hero" id="hero" style="display:none;">
+    <div class="eyebrow stamp">Per India</div>
+    <h1>Gratta,<br>per vederee</h1>
+    <p class="intro-line">Avrei delle proposte da farti... scegli tu quando farlee</p>
+    <div class="scratch-shell">
+      <div id="reveal">
+        <h2>Indyy, ti va di uscire con me? </h2>
+        <div class="btn-row">
+          <button class="btn yes" id="yesBtn">Sii!</button>
+          <button class="btn no" id="noBtn">Ci penso</button>
+        </div>
+      </div>
+      <canvas id="scratchCanvas"></canvas>
+    </div>
+    <div class="scratch-hint">passa il dito o il mouse per grattare ✦</div>
+  </section>
+
+  <!-- MISSIONS -->
+  <section id="missions">
+    <h2 class="section-title">Sceglii</h2>
+    <p class="section-sub">spero di piacciano come idee :) </p>
+
+    <div class="cards" id="cardsContainer"></div>
+
+    <div class="confirm-zone">
+      <button class="btn" id="confirmBtn" disabled>Conferma il piano</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section id="finalScreen">
+    <h2 class="section-title">Fatto!!</h2>
+    <p class="section-sub">Il resto lo organizzo io, tu pensa solo a veniree</p>
+    <div class="ticket">
+      <span class="stamp">Appuntamenti — Giorgio &amp; India</span>
+      <h2 id="ticketTitle">Il piano</h2>
+      <div id="ticketLines"></div>
+    </div>
+    <div class="confirm-zone">
+      <div class="status-msg" id="emailStatus">Sto inviando le tue scelte a Giorgio...</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ---------------- DATA ----------------
+  const missions = [
+    {
+      id: 'cinema',
+      emoji: '🎬',
+      title: 'Spider-Man',
+      tag: 'Proposta A',
+      desc: 'Andiamo al cinema e poi dopo possiamo andare a prendere un gelatinoo',
+      color: 'var(--coral)'
+    },
+    {
+      id: 'sensi',
+      emoji: '🔬',
+      title: 'Museo dei sensi',
+      tag: 'Proposta B',
+      desc: 'Andiamo in questo museo stra figo secondo me che ho trovato su tiktok ,la mattina, e poi a pranzo prendiamo del cibo e andiamo a fare un picnic in sempione.',
+      color: 'var(--teal)'
+    },
+    {
+      id: 'chill',
+      emoji: '🌙',
+      title: 'Serata chill',
+      tag: 'Proposta C',
+      desc: 'Facciamo la spesa insieme e poi andiamo a casa mia: cuciniamo qualcosa insieme e poi netflix&chill.',
+      color: 'var(--mustard)'
+    },
+    {
+      id: 'terrazza',
+      emoji: '🍣',
+      title: 'Sushi & arcade',
+      tag: 'Proposta extra',
+      desc: 'Ceniamo a sushi e poi via a giocare: arcade, biliardo e quello che capita.',
+      color: 'var(--plum)'
+    },
+    {
+      id: 'custom',
+      emoji: '🎲',
+      title: 'Decidi te',
+      tag: 'Jolly',
+      desc: 'Se hai un\'idea tua, dimmi cosa vuoi fare e quando.',
+      color: '#EAD8C0',
+      custom: true
+    }
+  ];
+
+  // ---------------- LOCK SCREEN ----------------
+  const lockScreen = document.getElementById('lockScreen');
+  const lockInput = document.getElementById('lockInput');
+  const lockBtn = document.getElementById('lockBtn');
+  const lockError = document.getElementById('lockError');
+  const heroSection = document.getElementById('hero');
+  const CORRECT_CODE = '34';
+
+  function tryUnlock(){
+    if(lockInput.value.trim() === CORRECT_CODE){
+      lockScreen.style.display = 'none';
+      heroSection.style.display = '';
+      sizeCanvas();
+    } else {
+      lockError.textContent = 'Non è quello giusto, riprova.';
+      lockInput.classList.add('shake');
+      setTimeout(()=> lockInput.classList.remove('shake'), 400);
+      lockInput.value = '';
+      lockInput.focus();
+    }
+  }
+  lockBtn.addEventListener('click', tryUnlock);
+  lockInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') tryUnlock(); });
+  lockInput.addEventListener('input', e=>{
+    e.target.value = e.target.value.replace(/[^0-9]/g,'').slice(0,2);
+  });
+
+  // ---------------- SCRATCH CARD ----------------
+  const canvas = document.getElementById('scratchCanvas');
+  const ctx = canvas.getContext('2d');
+  const shell = document.querySelector('.scratch-shell');
+  let scratching = false;
+  let revealed = false;
+
+  function sizeCanvas(){
+    const rect = shell.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    drawScratchLayer();
+  }
+
+  function drawScratchLayer(){
+    ctx.fillStyle = '#FFC93C';
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(43,36,32,0.25)';
+    ctx.lineWidth = 2;
+    for(let i=-canvas.height; i<canvas.width; i+=18){
+      ctx.beginPath();
+      ctx.moveTo(i,0);
+      ctx.lineTo(i+canvas.height, canvas.height);
+      ctx.stroke();
+    }
+    ctx.font = '700 18px Fredoka, sans-serif';
+    ctx.fillStyle = 'rgba(43,36,32,0.55)';
+    ctx.textAlign = 'center';
+    ctx.fillText('GRATTA QUI ✦ GRATTA QUI', canvas.width/2, canvas.height/2);
+  }
+
+  function getPos(e){
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {x: clientX - rect.left, y: clientY - rect.top};
+  }
+
+  function scratchAt(x,y){
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x,y,26,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  function checkRevealPercent(){
+    const data = ctx.getImageData(0,0,canvas.width, canvas.height).data;
+    let cleared = 0;
+    const total = data.length/4;
+    for(let i=3;i<data.length;i+=4*20){ // sample
+      if(data[i] < 40) cleared++;
+    }
+    const sampled = total/20;
+    return cleared/sampled;
+  }
+
+  function maybeReveal(){
+    if(revealed) return;
+    if(checkRevealPercent() > 0.45){
+      revealed = true;
+      canvas.style.transition = 'opacity .5s ease';
+      canvas.style.opacity = '0';
+      setTimeout(()=> canvas.style.display='none', 500);
+    }
+  }
+
+  canvas.addEventListener('mousedown', e=>{ scratching = true; const p=getPos(e); scratchAt(p.x,p.y); });
+  canvas.addEventListener('mousemove', e=>{ if(scratching){ const p=getPos(e); scratchAt(p.x,p.y); maybeReveal(); }});
+  window.addEventListener('mouseup', ()=> scratching=false);
+  canvas.addEventListener('touchstart', e=>{ scratching=true; const p=getPos(e); scratchAt(p.x,p.y); }, {passive:true});
+  canvas.addEventListener('touchmove', e=>{ const p=getPos(e); scratchAt(p.x,p.y); maybeReveal(); }, {passive:true});
+  window.addEventListener('touchend', ()=> scratching=false);
+
+  window.addEventListener('resize', sizeCanvas);
+  sizeCanvas();
+
+  // ---------------- NO BUTTON DODGE ----------------
+  const noBtn = document.getElementById('noBtn');
+  const revealBox = document.getElementById('reveal');
+  const excuses = ['Ci penso', 'Aspetta...', 'Fammi riflettere', 'Ne riparliamo?', 'Ok ok, forse'];
+  let dodgeCount = 0;
+  function dodge(){
+    dodgeCount++;
+    noBtn.textContent = excuses[dodgeCount % excuses.length];
+    const maxX = revealBox.clientWidth - noBtn.clientWidth - 10;
+    const maxY = revealBox.clientHeight - noBtn.clientHeight - 10;
+    const x = Math.max(0, Math.random()*maxX);
+    const y = Math.max(0, Math.random()*maxY);
+    noBtn.style.position = 'absolute';
+    noBtn.style.left = x+'px';
+    noBtn.style.top = y+'px';
+  }
+  noBtn.addEventListener('mouseenter', dodge);
+  noBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); dodge(); }, {passive:false});
+
+  // ---------------- YES -> MISSIONS ----------------
+  document.getElementById('yesBtn').addEventListener('click', ()=>{
+    document.getElementById('hero').style.display = 'none';
+    document.getElementById('missions').style.display = 'block';
+    renderCards();
+  });
+
+  // ---------------- CARDS ----------------
+  const cardsContainer = document.getElementById('cardsContainer');
+  const selections = {}; // id -> date string
+  const customTexts = {}; // id -> free text (only for 'custom' mission)
+
+  function renderCards(){
+    cardsContainer.innerHTML = '';
+    missions.forEach(m=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.setProperty('--card-color', m.color);
+      card.dataset.id = m.id;
+      card.innerHTML = `
+        <div class="check">✓</div>
+        <div class="card-top">
+          <div class="card-emoji">${m.emoji}</div>
+          <div>
+            <div class="card-tag">${m.tag}</div>
+            <div class="card-title">${m.title}</div>
+          </div>
+        </div>
+        <p class="card-desc">${m.desc}</p>
+        <div class="date-panel">
+          ${m.custom ? `<label>Cosa vuoi fare?</label>
+          <input type="text" class="custom-text" data-id="${m.id}" placeholder="es. gelato ai Navigli" style="margin-bottom:10px;">` : ''}
+          <label>Quando ci va?</label>
+          <input type="date" data-id="${m.id}">
+        </div>
+      `;
+      card.addEventListener('click', (e)=>{
+        if(e.target.closest('.date-panel')) return;
+        card.classList.toggle('selected');
+        if(!card.classList.contains('selected')){
+          delete selections[m.id];
+        }
+        updateConfirmState();
+      });
+      cardsContainer.appendChild(card);
+    });
+
+    cardsContainer.querySelectorAll('input[type="date"]').forEach(inp=>{
+      inp.addEventListener('click', e=> e.stopPropagation());
+      const handleDateUpdate = e=>{
+        selections[e.target.dataset.id] = e.target.value;
+        updateConfirmState();
+      };
+      inp.addEventListener('input', handleDateUpdate);
+      inp.addEventListener('change', handleDateUpdate);
+      inp.addEventListener('blur', handleDateUpdate);
+    });
+
+    cardsContainer.querySelectorAll('input.custom-text').forEach(inp=>{
+      inp.addEventListener('click', e=> e.stopPropagation());
+      inp.addEventListener('input', e=>{
+        customTexts[e.target.dataset.id] = e.target.value.trim();
+        updateConfirmState();
+      });
+    });
+  }
+
+  function updateConfirmState(){
+    const selectedCards = [...cardsContainer.querySelectorAll('.card.selected')];
+    const allHaveDates = selectedCards.every(c=> selections[c.dataset.id]);
+    const customCard = selectedCards.find(c => c.dataset.id === 'custom');
+    const customOk = !customCard || (customTexts['custom'] && customTexts['custom'].length > 0);
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.disabled = !(selectedCards.length > 0 && allHaveDates && customOk);
+    document.getElementById('statusMsg').textContent =
+      selectedCards.length === 0 ? 'Scegli almeno una missione' :
+      !allHaveDates ? 'Manca una data per qualche missione' :
+      !customOk ? 'Scrivi cosa vuoi fare per il jolly' : '';
+  }
+
+  // ---------------- CONFIRM ----------------
+  document.getElementById('confirmBtn').addEventListener('click', async ()=>{
+    const chosen = missions.filter(m => selections[m.id])
+      .sort((a,b) => new Date(selections[a.id]) - new Date(selections[b.id]));
+    document.getElementById('missions').style.display = 'none';
+    const finalScreen = document.getElementById('finalScreen');
+    finalScreen.style.display = 'block';
+
+    const linesHTML = chosen.map((m, i)=>{
+      const d = new Date(selections[m.id]+'T00:00:00');
+      const dateStr = d.toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'});
+      const label = m.custom ? `${m.emoji} ${customTexts['custom']}` : `${m.emoji} ${m.title}`;
+      const isFirst = i === 0;
+      return `<div class="ticket-line${isFirst ? ' ticket-line-first' : ''}">
+        <b>${label}</b>
+        <span>${dateStr}${isFirst ? '<br><span class="first-badge">il nostro primo appuntamento!!! </span>' : ''}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('ticketLines').innerHTML = linesHTML;
+
+    const emailBody = chosen.map((m, i)=>{
+      const d = new Date(selections[m.id]+'T00:00:00');
+      const dateStr = d.toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'});
+      const label = m.custom ? `${customTexts['custom']} (idea sua)` : m.title;
+      return `- ${label}: ${dateStr}${i === 0 ? '  <-- il nostro primo appuntamento!' : ''}`;
+    }).join('\n');
+
+    const emailStatus = document.getElementById('emailStatus');
+    try{
+      await emailjs.send('service_2sn25tp', 'template_g28nxsj', { scelte: emailBody });
+      emailStatus.textContent = 'Fatto, è arrivato a Giorgio ✓';
+    }catch(err){
+      console.error('emailjs send error', err);
+      emailStatus.textContent = 'Non sono riuscito a inviarla, ma le tue scelte sono comunque salvate qui.';
+    }
+
+    launchConfetti();
+
+    try{
+      await window.storage.set('risposta-india-giorgio', JSON.stringify({
+        chosen: chosen.map(m=>({id:m.id, title:m.title, date:selections[m.id]})),
+        answeredAt: new Date().toISOString()
+      }), true);
+    }catch(err){
+      console.error('storage error', err);
+    }
+  });
+
+  function launchConfetti(){
+    const emojis = ['❤️','🩷','🎬','⭐','🍿'];
+    for(let i=0;i<28;i++){
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      el.style.left = Math.random()*100 + 'vw';
+      el.style.animationDuration = (2.5 + Math.random()*2) + 's';
+      el.style.animationDelay = (Math.random()*0.6) + 's';
+      document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 5000);
+    }
+  }
+</script>
+</body>
+</html>
